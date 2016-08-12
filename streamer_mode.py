@@ -1,4 +1,4 @@
-import sublime, sublime_plugin, re, fnmatch
+import sublime, sublime_plugin, re, fnmatch, os
 
 class StreamerModeEvents(sublime_plugin.EventListener):
     def on_load(self, view):
@@ -13,21 +13,22 @@ class StreamerModeEvents(sublime_plugin.EventListener):
             window.run_command("close_file")
             newView = window.new_file()
             newView.settings().set("streamer_mode_blocked_file", view.file_name())
-            newView.set_read_only(True)
+            newView.set_scratch(True)
             window.focus_view(newView)
-            panel = window.create_output_panel("streamer_mode_output")
-            window.run_command("show_panel", { "panel": "output.streamer_mode_output" })
-            panel.run_command("streamer_mode_output_warn")
-
-    def on_pre_close(self, view):
-        # Clean up if it is a only for display view
-        if view.settings().get("streamer_mode_blocked_file", None) != None:
-            view.window().run_command("streamer_mode_close_panel")
+            filename = os.path.basename(view.file_name())
+            newView.set_name("Streamer Mode: {}".format(filename))
+            newView.run_command("streamer_mode_output_warn", {"fname": filename})
+            newView.set_read_only(True)
 
 
 class StreamerModeOutputWarnCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        self.view.insert(edit, self.view.size(), "This file is currently BLOCKED from view because Streamer Mode is active. To force-view this file, use the command palette to override and allow the file to open again.")
+    def run(self, edit, **args):
+        self.view.insert(edit, 0, """Streamer Mode Active: {}
+======================
+This file is currently BLOCKED from view because Streamer Mode is active.
+
+To force-view this file, use the Command Palette on this screen to override and allow the file to open again.
+Otherwise, it is SAFE to close this view.""".format(args["fname"]))
 
 
 class StreamerModeOverride(sublime_plugin.TextCommand):
@@ -42,13 +43,6 @@ class StreamerModeOverride(sublime_plugin.TextCommand):
         window.run_command("close_file")
         newView = window.open_file(s2)
         newView.settings().set("streamer_mode_override", True)
-        window.run_command("streamer_mode_close_panel")
-
-
-class StreamerModeClosePanelCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        if self.view.window().find_output_panel("streamer_mode_output") != None:
-            self.view.window().destroy_output_panel("streamer_mode_output")
 
 
 class StreamerModeToggleCommand(sublime_plugin.TextCommand):
