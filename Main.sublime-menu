@@ -1,0 +1,19 @@
+[
+    {
+        "id": "tools",
+        "children":
+        [
+            {
+                "id": "streamer_mode",
+                "caption": "Streamer Mode",
+                "children":
+                [
+                    {
+                        "caption": "Toggle Streamer Mode",
+                        "command": "streamer_mode_toggle"
+                    }
+                ]
+            }
+        ]
+    }
+]

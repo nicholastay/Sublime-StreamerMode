@@ -1,0 +1,10 @@
+[
+  {
+    "caption": "Streamer Mode: Toggle",
+    "command": "streamer_mode_toggle"
+  },
+  {
+    "caption": "Streamer Mode: Override and Open",
+    "command": "streamer_mode_override"
+  }
+]
