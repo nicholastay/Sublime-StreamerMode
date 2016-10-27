@@ -2,10 +2,11 @@ import sublime, sublime_plugin, re, fnmatch, os
 
 class StreamerModeEvents(sublime_plugin.EventListener):
     def on_load(self, view):
-        s = sublime.load_settings("Preferences.sublime-settings")
+        s = sublime.load_settings("StreamerMode.sublime-settings")
         if s.get("streamer_mode_enabled", False) != True:
             return
-        self.hide_files = [re.compile(p) for p in [fnmatch.translate(q) for q in s.get("streamer_mode_hide_files", [])]] # thanks for inspiration! https://github.com/jonathandelgado/SublimeTodoReview/blob/master/TodoReview.py
+        global_s = sublime.load_settings("Preferences.sublime-settings")
+        self.hide_files = [re.compile(p) for p in [fnmatch.translate(q) for q in global_s.get("streamer_mode_hide_files", [])]] # thanks for inspiration! https://github.com/jonathandelgado/SublimeTodoReview/blob/master/TodoReview.py
         if not any(p.search(view.file_name()) for p in self.hide_files):
             return
         if view.settings().get("streamer_mode_override", False) == False:
@@ -33,7 +34,7 @@ Otherwise, it is SAFE to close this view.""".format(args["fname"]))
 
 class StreamerModeOverride(sublime_plugin.TextCommand):
     def run(self, edit):
-        s = sublime.load_settings("Preferences.sublime-settings")
+        s = sublime.load_settings("StreamerMode.sublime-settings")
         if s.get("streamer_mode_enabled", False) != True:
             return
         s2 = self.view.settings().get("streamer_mode_blocked_file", None)
@@ -47,14 +48,24 @@ class StreamerModeOverride(sublime_plugin.TextCommand):
 
 class StreamerModeToggleCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        s = sublime.load_settings("Preferences.sublime-settings")
+        s = sublime.load_settings("StreamerMode.sublime-settings")
+        global_s = sublime.load_settings("Preferences.sublime-settings")
         enabled = s.get("streamer_mode_enabled", False)
         if enabled != True:
             s.set("streamer_mode_enabled", True)
-            if s.get("streamer_mode_hide_files", None) == None: 
-                s.set("streamer_mode_hide_files", []) # init
+            if global_s.get("streamer_mode_hide_files", None) == None: 
+                global_s.set("streamer_mode_hide_files", []) # init
+            # store old bin stores -- hide the files from the goto anything menu
+            binpatterns = global_s.get("binary_file_patterns", [])
+            s.set("streamer_mode_binary_backup", binpatterns)
+            global_s.set("binary_file_patterns", binpatterns + global_s.get("streamer_mode_hide_files", [])) # concat old ones and our ones
             self.view.window().status_message("Streamer Mode: Enabled")
         else:
             s.set("streamer_mode_enabled", False)
+            # restore bin stores
+            binpatterns = s.get("streamer_mode_binary_backup", None)
+            if binpatterns != None:
+                global_s.set("binary_file_patterns", binpatterns)
             self.view.window().status_message("Streamer Mode: Disabled")
+        sublime.save_settings("StreamerMode.sublime-settings")
         sublime.save_settings("Preferences.sublime-settings")
