@@ -5,7 +5,7 @@
 Do you stream programming and worried/have accidentally opened config files or the like with confidential data? Well, this plugin is the plugin for you.
 
 ## Install
-Available on Package Control (still being processed at the time of commit, but should be OK soon™)
+Available on Package Control! ~~(still being processed at the time of commit, but should be OK soon™)~~ Should be live now.
 
 Manual install:
 ```
